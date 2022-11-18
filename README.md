@@ -83,7 +83,7 @@ Note: You will need to have [Docker](https://docs.docker.com/get-docker/) instal
 
 1. Install the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) for VS Code.
 2. From the remote connection window (found by clicking on the green icon at the bottom left of the VS Code window) choose "Reopen in Container"
-3. Build using catkin_make / catkin build
+3. From the `~/infield_robotics_ws` directory in a `bash` shell, build using `catkin_make` / `catkin build`
 
 The container will open in a pre-made ROS workspace directory with this respository cloned inside a `src/` subdirectory, having already run the setup script for ROS.
 

@@ -23,6 +23,12 @@ RUN groupadd --gid $USER_GID $USERNAME \
     && mkdir -p /home/${USERNAME}/infield_robotics_ws/src \
     && chown -R ${USERNAME}:${USERNAME} /home/${USERNAME} 
 
+# Fix catkin issue in Noetic: https://answers.ros.org/question/353113/catkin-build-in-ubuntu-2004-noetic/?answer=353115#post-id-353115
+RUN apt-get update \
+    && apt-get install -y \
+        python3-catkin-tools \ 
+        python3-osrf-pycommon
+
 # ********************************************************
 # * Anything else you want to do like clean up goes here *
 # ********************************************************
