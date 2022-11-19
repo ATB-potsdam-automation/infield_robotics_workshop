@@ -2,7 +2,7 @@
 [![Open in Dev Containers](https://img.shields.io/static/v1?label=Dev%20Containers&message=Open&color=blue&logo=visualstudiocode)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/ATB-potsdam-automation/infield_robotics_workshop)
 
 ## About
-This repository contains material for the Infield Robotics Workshop of the VDI-Land.Technik / EurAgEng pre-conference.
+This repository contains material for the Infield Robotics Workshop of the VDI-Land.Technik / EurAgEng pre-conference. You can run the execises directly on your own machine using a local ROS install, inside a VS-devcontainer, or using the VirtualBox VM template provided to participants.
 
 <details open="open">
 <summary>Table of Contents</summary>
