@@ -1,2 +1,4 @@
-results/humidity_sensors.csv
 .vscode/
+devel
+build
+src/infield_robotics_workshop/results/humidity_sensors.csv
