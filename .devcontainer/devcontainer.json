@@ -14,7 +14,7 @@
 	"features": {
 		"ghcr.io/devcontainers/features/git:1": {}
 	},
-	"workspaceMount": "source=${localWorkspaceFolder},target=/home/user/infield_robotics_ws/src,type=bind",
+	"workspaceMount": "source=${localWorkspaceFolder},target=/home/user/infield_robotics_ws,type=bind",
 	"workspaceFolder": "/home/user/infield_robotics_ws",
 	"settings": {
 		"terminal.integrated.defaultProfile.linux": "bash", 
