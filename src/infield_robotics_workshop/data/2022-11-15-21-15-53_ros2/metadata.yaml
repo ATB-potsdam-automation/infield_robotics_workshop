@@ -1,0 +1,84 @@
+rosbag2_bagfile_information:
+  compression_format: ''
+  compression_mode: ''
+  custom_data: null
+  duration:
+    nanoseconds: 127857000000
+  files:
+  - duration:
+      nanoseconds: 127857000000
+    message_count: 13307
+    path: 2022-11-15-21-15-53_ros2.db3
+    starting_time:
+      nanoseconds_since_epoch: 448067000000
+  message_count: 13307
+  relative_file_paths:
+  - 2022-11-15-21-15-53_ros2.db3
+  ros_distro: rosbags
+  starting_time:
+    nanoseconds_since_epoch: 448067000000
+  storage_identifier: sqlite3
+  topics_with_message_count:
+  - message_count: 1
+    topic_metadata:
+      name: /tf_static
+      offered_qos_profiles:
+      - avoid_ros_namespace_conventions: false
+        deadline:
+          nsec: 4294967295
+          sec: 2147483647
+        depth: 0
+        durability: transient_local
+        history: unknown
+        lifespan:
+          nsec: 4294967295
+          sec: 2147483647
+        liveliness: automatic
+        liveliness_lease_duration:
+          nsec: 4294967295
+          sec: 2147483647
+        reliability: reliable
+      serialization_format: cdr
+      type: tf2_msgs/msg/TFMessage
+      type_description_hash: 
+        RIHS01_e369d0f05a23ae52508854b66f6aa0437f3449d652e8cbf22d5abe85d020f087
+  - message_count: 12790
+    topic_metadata:
+      name: /tf
+      offered_qos_profiles: []
+      serialization_format: cdr
+      type: tf2_msgs/msg/TFMessage
+      type_description_hash: 
+        RIHS01_e369d0f05a23ae52508854b66f6aa0437f3449d652e8cbf22d5abe85d020f087
+  - message_count: 511
+    topic_metadata:
+      name: /uav1/fix
+      offered_qos_profiles: []
+      serialization_format: cdr
+      type: sensor_msgs/msg/NavSatFix
+      type_description_hash: 
+        RIHS01_62223ab3fe210a15976021da7afddc9e200dc9ec75231c1b6a557fc598a65404
+  - message_count: 5
+    topic_metadata:
+      name: /rfid_detections
+      offered_qos_profiles:
+      - avoid_ros_namespace_conventions: false
+        deadline:
+          nsec: 4294967295
+          sec: 2147483647
+        depth: 0
+        durability: transient_local
+        history: unknown
+        lifespan:
+          nsec: 4294967295
+          sec: 2147483647
+        liveliness: automatic
+        liveliness_lease_duration:
+          nsec: 4294967295
+          sec: 2147483647
+        reliability: reliable
+      serialization_format: cdr
+      type: sensor_msgs/msg/RelativeHumidity
+      type_description_hash: 
+        RIHS01_8687c99b4fb393cb2e545e407b5ea7fd0b5d8960bcd849a0f86c544740138839
+  version: 9

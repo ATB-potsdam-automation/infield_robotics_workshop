@@ -12,22 +12,24 @@
 # EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import rospy
+import rclpy
+from ament_index_python.packages import get_package_share_directory
+from pathlib import Path
+from rclpy.node import Node
+from rclpy.parameter import Parameter
 from sensor_msgs.msg import RelativeHumidity, NavSatFix
 import csv
-import rospkg
 
 
-class RfidReader():
-    
-    def __init__(self):        
-        # get path of ros_pkg
-        rospack = rospkg.RosPack()
-        pkg_folder = rospack.get_path('infield_robotics_workshop')
-        
-        # open a csv file in the results folder of the package for data saving
-        self.fh = open(pkg_folder + "/results/humidity_sensors.csv", "w")
-        
+class RfidReader(Node):
+
+    def __init__(self):
+        super().__init__('listener')
+        self.set_parameters([Parameter('use_sim_time', value=True)])
+
+        # open a csv file in the results folder
+        self.fh = open(Path.home() / "infield_robotics_ws" / "results" / "humidity_sensors.csv", "w")
+
         # create a csv_writer object to write data the Dict-Writer uses a Dictionary Structure
         self.csv_writer = csv.DictWriter(self.fh, fieldnames=['Sensor_ID', 'Latitude', 'Longitude', 'Humidity'])
 
@@ -37,13 +39,14 @@ class RfidReader():
         self.current_pos = NavSatFix()
 
         # hook the first subscriber to our rfid-callback
-        rospy.Subscriber("/rfid_detections", RelativeHumidity, self.rfid_callback, queue_size=1)
-        
+        self.create_subscription(RelativeHumidity, "/rfid_detections", self.rfid_callback, 1)
+
         # hook the first subscriber to the fix-callback
-        rospy.Subscriber("/uav1/fix", NavSatFix, self.gps_callback)
-        
+        self.create_subscription(NavSatFix, "/uav1/fix", self.gps_callback, 1)
+
         # bool to avoid old latched message
         self.init = True
+        self.last_gps_log_time = None
         
 
     # RFID detection callback
@@ -52,7 +55,10 @@ class RfidReader():
         if self.init:
             return
         # print RFID-sensor info to the screen
-        rospy.loginfo("\n\n Read RFID-Sensor! Sensor: %s Humidity: %f \n", message.header.frame_id, message.relative_humidity)
+        self.get_logger().info(
+            f"Read RFID-Sensor! Sensor: {message.header.frame_id} "
+            f"Humidity: {message.relative_humidity:f}"
+        )
                 
         # we need to make sure the writer has been initialised and the file has not been closed:
         if self.csv_writer is not None:
@@ -69,7 +75,13 @@ class RfidReader():
             documentation of the csv-DictWriter can be found here: https://docs.python.org/3/library/csv.html#csv.DictWriter 
                 
             """
-            pass # do nothing
+            self.csv_writer.writerow({
+                "Sensor_ID": message.header.frame_id,
+                "Latitude": self.current_pos.latitude,
+                "Longitude": self.current_pos.longitude,
+                "Humidity": message.relative_humidity,
+            })
+            self.fh.flush()
             
 
     # GPS-position (fix) message callback 
@@ -80,7 +92,12 @@ class RfidReader():
             self.init = False
         
         # print the current position every two seconds (not for every message)
-        rospy.loginfo_throttle(2.0, "Read GPS Position. Lat: %f Long: %f \n", message.latitude, message.longitude)
+        now = self.get_clock().now()
+        if self.last_gps_log_time is None or (now - self.last_gps_log_time).nanoseconds >= 2_000_000_000:
+            self.get_logger().info(
+                f"Read GPS Position. Lat: {message.latitude:f} Long: {message.longitude:f}"
+            )
+            self.last_gps_log_time = now
         
         # store the position in a object attribute
         self.current_pos = message
@@ -88,24 +105,27 @@ class RfidReader():
     def run(self):
 
         # spin() simply keeps python from exiting until this node is stopped
-        rospy.spin()
-        
-        # close the file when the node is stopped
-        self.csv_writer = None
-        self.fh.close()
+        try:
+            rclpy.spin(self)
+        finally:
+            # close the file when the node is stopped
+            self.csv_writer = None
+            self.fh.close()
         
 
+def main(args=None):
+    rclpy.init(args=args)
+    rfid_reader = RfidReader()
+    try:
+        rfid_reader.run()
+    except KeyboardInterrupt:
+        # Ctrl+C requested shutdown.
+        pass
+    finally:
+        rfid_reader.destroy_node()
+        if rclpy.ok():
+            rclpy.shutdown()
+
+
 if __name__ == '__main__':
-    
-    # In ROS, nodes are uniquely named. If two nodes with the same
-    # name are launched, the previous one is kicked off. The
-    # anonymous=True flag means that rospy will choose a unique
-    # name for our 'listener' node so that multiple listeners can
-    # run simultaneously.
-    rospy.init_node('listener', anonymous=True)
-    
-    # Instantiate object of  the RfidReader() class
-    RFID_reader = RfidReader()
-    
-    # execute the objects run() method 
-    RFID_reader.run()
+    main()

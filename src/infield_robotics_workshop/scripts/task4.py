@@ -12,42 +12,68 @@
 # EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import rospy
+import rclpy
+from geometry_msgs.msg import PoseStamped
+from rclpy.duration import Duration
+from rclpy.node import Node
+from rclpy.parameter import Parameter
 from sensor_msgs.msg import RelativeHumidity, NavSatFix
 import tf2_ros
-import tf.transformations
-from tf2_geometry_msgs import PoseStamped
+import tf_transformations
+import tf2_geometry_msgs
 
 
-class RfidReader():
-    
-    def __init__(self):        
+class RfidReader(Node):
+
+    def __init__(self):
+        super().__init__('listener')
+        self.set_parameters([Parameter('use_sim_time', value=True)])
 
         # initialise storage space for 
         self.current_pos = NavSatFix()
 
         # hook the first subscriber to our rfid-callback
-        rospy.Subscriber("/rfid_detections", RelativeHumidity, self.rfid_callback)
-        
+        self.create_subscription(RelativeHumidity, "/rfid_detections", self.rfid_callback, 1)
+
         # hook the first subscriber to the fix-callback
-        rospy.Subscriber("/uav1/fix", NavSatFix, self.gps_callback)
-               
+        self.create_subscription(NavSatFix, "/uav1/fix", self.gps_callback, 1)
+
         # set up a tf2 Buffer this stores the incoming tf-messages       
         self.tfBuffer = tf2_ros.Buffer()
         # set up our TransformListener, this gives us access to transformations (even past ones through the buffer)
-        self.listener = tf2_ros.TransformListener(self.tfBuffer)
-        
+        self.listener = tf2_ros.TransformListener(self.tfBuffer, self)
+
         # bool to avoid old latched message
         self.init = True
+        self.last_gps_log_time = None
     
     def send_current_position_as_goal(self):
 
         # get the transform
-        transform = self.tfBuffer.lookup_transform("uav/base_link", 'map', rospy.Time.now(), rospy.Duration(0.1))
+        try:
+            transform = self.tfBuffer.lookup_transform(
+                "uav/base_link", "map", self.get_clock().now(), timeout=Duration(seconds=0.1)
+            )
+        except tf2_ros.TransformException as error:
+            self.get_logger().warning(f"Could not transform map to uav/base_link: {error}")
+            return
         # print out the rotation
-        rospy.loginfo("received Rotation: (%f, %f, %f,%f),  \n", transform.transform.rotation.x, transform.transform.rotation.y, transform.transform.rotation.z, transform.transform.rotation.w,)
+        self.get_logger().info(
+            "received Rotation: (%f, %f, %f, %f)" % (
+                transform.transform.rotation.x,
+                transform.transform.rotation.y,
+                transform.transform.rotation.z,
+                transform.transform.rotation.w,
+            )
+        )
         # print out the translation
-        rospy.loginfo("received Translation: (%f, %f, %f),  \n", transform.transform.translation.x, transform.transform.translation.y, transform.transform.translation.z)
+        self.get_logger().info(
+            "received Translation: (%f, %f, %f)" % (
+                transform.transform.translation.x,
+                transform.transform.translation.y,
+                transform.transform.translation.z,
+            )
+        )
         """
         YOUR CODE GOES HERE:
         
@@ -67,7 +93,7 @@ class RfidReader():
             return
         # check if the humidity we read out is below threshold
         if message.relative_humidity < 0.5:
-            rospy.loginfo(" Humidity too low - Sending goal to UGV")
+            self.get_logger().info("Humidity too low - Sending goal to UGV")
             # if it is below a certain threshold send the current UAV position as goal-point to the UGV
             self.send_current_position_as_goal()      
     
@@ -79,7 +105,12 @@ class RfidReader():
             self.init = False
         
         # print the current position every two seconds (not for every message)
-        rospy.loginfo_throttle(2.0, "Read GPS Position. Lat: %f Long: %f \n", message.latitude, message.longitude)
+        now = self.get_clock().now()
+        if self.last_gps_log_time is None or (now - self.last_gps_log_time).nanoseconds >= 2_000_000_000:
+            self.get_logger().info(
+                f"Read GPS Position. Lat: {message.latitude:f} Long: {message.longitude:f}"
+            )
+            self.last_gps_log_time = now
         
         # store the position in a object attribute
         self.current_pos = message
@@ -87,20 +118,22 @@ class RfidReader():
     def run(self):
 
         # spin() simply keeps python from exiting until this node is stopped
-        rospy.spin()
+        rclpy.spin(self)
         
 
+def main(args=None):
+    rclpy.init(args=args)
+    rfid_reader = RfidReader()
+    try:
+        rfid_reader.run()
+    except KeyboardInterrupt:
+        # Ctrl+C requested shutdown.
+        pass
+    finally:
+        rfid_reader.destroy_node()
+        if rclpy.ok():
+            rclpy.shutdown()
+
+
 if __name__ == '__main__':
-    
-    # In ROS, nodes are uniquely named. If two nodes with the same
-    # name are launched, the previous one is kicked off. The
-    # anonymous=True flag means that rospy will choose a unique
-    # name for our 'listener' node so that multiple listeners can
-    # run simultaneously.
-    rospy.init_node('listener', anonymous=True)
-    
-    # Instantiate object of  the RfidReader() class
-    RFID_reader = RfidReader()
-    
-    # execute the objects run() method 
-    RFID_reader.run()
+    main()

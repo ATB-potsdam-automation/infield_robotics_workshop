@@ -3,34 +3,36 @@
 	"build": {
 		"dockerfile": "Dockerfile",
 		"args": {
-			"DEVCONTAINER_ROS_IMAGE_TAG": "noetic",
-			"USERNAME": "user"
+			"DEVCONTAINER_ROS_IMAGE_TAG": "jazzy",
+			"USERNAME": "ubuntu"
 		}
 	},
-	"extensions": [
-		"ms-iot.vscode-ros",
-		"ms-python.python"
-	],
 	"features": {
 		"ghcr.io/devcontainers/features/git:1": {}
 	},
-	"workspaceMount": "source=${localWorkspaceFolder},target=/home/user/infield_robotics_ws,type=bind",
-	"workspaceFolder": "/home/user/infield_robotics_ws",
-	"settings": {
-		"terminal.integrated.defaultProfile.linux": "bash", 
-        "terminal.integrated.profiles.linux": {
-            "bash": {
-                "path": "/bin/bash"
-            }
-        }
+	"workspaceMount": "source=${localWorkspaceFolder},target=/home/ubuntu/infield_robotics_ws,type=bind",
+	"workspaceFolder": "/home/ubuntu/infield_robotics_ws",
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-iot.vscode-ros",
+				"ms-python.python"
+			],
+			"settings": {
+				"terminal.integrated.defaultProfile.linux": "bash", 
+				"terminal.integrated.profiles.linux": {
+					"bash": {
+						"path": "/bin/bash"
+					}
+				},
+				"python.terminal.activateEnvironment": false
+			}
+		}
 	},
 	
 	"postCreateCommand": "chmod +x .devcontainer/postcreatecommand.sh && .devcontainer/postcreatecommand.sh"
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
-
-	// Configure tool-specific properties.
-	// "customizations": {},
 
 	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
 	// "remoteUser": "root"

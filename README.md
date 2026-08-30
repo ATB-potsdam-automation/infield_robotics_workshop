@@ -2,111 +2,67 @@
 [![Open in Dev Containers](https://img.shields.io/static/v1?label=Dev%20Containers&message=Open&color=blue&logo=visualstudiocode)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/ATB-potsdam-automation/infield_robotics_workshop)
 
 ## About
-This repository contains material for the Infield Robotics Workshop of the VDI-Land.Technik / EurAgEng pre-conference. You can run the execises directly on your own machine using a local ROS install, inside a VS-devcontainer, or using the VirtualBox VM template provided to participants.
+This repository contains material for the Infield Robotics Workshop of the VDI-Land.Technik / EurAgEng pre-conference. You can run the exercises using a local ROS 2 Jazzy installation or inside the included VS Code devcontainer.
 
-<details open="open">
-<summary>Table of Contents</summary>
-
-- [About](#about)
-- [Requirements](#requirements)
-- [Installation](#installation)
-    - [installation in a new catkin workspace](#installation-in-a-new-catkin-workspace)
-    - [installation in an existing catkin workspace](#installation-in-an-existing-catkin-workspace)
-    - [installation using VS Code Devcontainer](#installation-using-devcontainers-vs-code)
-- [Running the Excercises](#running-the-excercises)
-</details>
-
--------------------------------------------------------------------------------------
 ## Requirements
 
-A system with setup ROS 1 Melodic or higher (tested for Melodic and Noetic)
+- Ubuntu 24.04 with ROS 2 Jazzy
+- `colcon` (`python3-colcon-common-extensions`)
+- Docker and the VS Code Dev Containers extension when using the included container
 
--------------------------------------------------------------------------------------
+## Installation
 
-## INSTALLATION
+### New colcon workspace
 
-### installation in a new catkin workspace 
+Source ROS 2 Jazzy:
 
-exemplary installation using using catkin_make
-
-source your ROS installation (replace ROS_DISTRO with the ROS_DISTRO you are using (e.g. 'noetic')
 ```sh
-source /opt/ros/ROS_DISTRO/setup.bash
+source /opt/ros/jazzy/setup.bash
 ```
 
-create new catkin workspace
+Create a workspace and clone the workshop into its `src` directory:
+
 ```sh
 mkdir -p ~/infield_robotics_ws/src
-```
-
-switch into that workspace
-```sh
 cd ~/infield_robotics_ws/src
-```
-
-clone the repository with the tasks
-```sh
 git clone https://github.com/ATB-potsdam-automation/infield_robotics_workshop.git
-```
-
-(optional) clone the repository with the solutions
-```sh
-git clone https://github.com/ATB-potsdam-automation/infield_robotics_workshop_solutions.git
-```
-
-switch to workspace root folder
-```sh
 cd ~/infield_robotics_ws
 ```
 
-build the workspace
+Build and source the workspace:
+
 ```sh
-catkin_make
+colcon build --symlink-install
+source install/setup.bash
 ```
 
---------------------
+### Existing colcon workspace
 
-### installation in an existing catkin workspace
+1. Source `/opt/ros/jazzy/setup.bash`.
+2. Clone this repository into the workspace `src` directory.
+3. From the workspace root, run `colcon build --symlink-install`.
+4. Source `install/setup.bash` in every terminal that uses the package.
 
-1. source your catkin workspace
-2. change directory into your workspaces src folder
-3. clone the reposistories
-4. build using catkin_make / catkin build
+### Devcontainer
 
--------------------------------------------------------------------------------------
+The `.devcontainer` configuration uses the `ros:jazzy` image. Reopen this repository in the container from VS Code; its post-create step builds the workspace with `colcon` and adds both ROS and the workspace setup files to `.bashrc`.
 
-### Installation using Devcontainers (VS Code)
-**NOTE: This option installs the workspace in a Docker container, unlike the above two options which install on your local system.**
+## Running the exercises
 
-A Devcontainer configuration is provided in this repo under `.devcontainer` for use within VS Code. 
-Note: You will need to have [Docker](https://docs.docker.com/get-docker/) installed on your system in order to build and run the container.
+In one terminal, source the workspace and start the looping playback:
 
-1. Install the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) for VS Code.
-2. From the remote connection window (found by clicking on the green icon at the bottom left of the VS Code window) choose "Reopen in Container"
-3. From the `~/infield_robotics_ws` directory in a `bash` shell, build using `catkin_make` / `catkin build`
-
-The container will open in a pre-made ROS workspace directory with this respository cloned inside a `src/` subdirectory, having already run the setup script for ROS.
-
-See [here](https://code.visualstudio.com/docs/devcontainers/containers) for more information about using Devcontainers in VS Code.
-
-## RUNNING THE EXCERCISES
-
-open a terminal and source your catkin_ws and ROS installation
 ```sh
-~/infield_robotics_ws/devel/setup.bash
+source /opt/ros/jazzy/setup.bash
+source ~/infield_robotics_ws/install/setup.bash
+ros2 launch infield_robotics_workshop workshop.launch.py
 ```
 
-launch the data playback
+In a second terminal, source the same setup and run one exercise:
+
 ```sh
-roslaunch infield_robotics_workshop workshop.launch
+source /opt/ros/jazzy/setup.bash
+source ~/infield_robotics_ws/install/setup.bash
+ros2 run infield_robotics_workshop task1.py
 ```
 
-open a second terminal and source your catkin_ws and ROS installation 
-```sh
-~/infield_robotics_ws/devel/setup.bash
-```
-
-run the tasks contained in the 'scripts' foulder (here the task1.py)
-```sh
-rosrun infield_robotics_workshop task1.py
-```
+Replace `task1.py` with `task2.py`, `task3.py`, or `task4.py` for the other exercises. The task nodes enable simulated time automatically so they follow the playback clock.

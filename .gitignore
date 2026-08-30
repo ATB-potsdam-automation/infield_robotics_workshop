@@ -1,4 +1,5 @@
 .vscode/
-devel
+install
 build
-src/infield_robotics_workshop/results/humidity_sensors.csv
+log
+results/humidity_sensors.csv
