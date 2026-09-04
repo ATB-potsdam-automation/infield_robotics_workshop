@@ -28,6 +28,8 @@ class RfidReader(Node):
     def __init__(self):
         super().__init__('listener')
         self.set_parameters([Parameter('use_sim_time', value=True)])
+        self.declare_parameter('humidity_threshold', 0.5)
+        self.humidity_threshold = self.get_parameter('humidity_threshold').value
 
         # initialise storage space for 
         self.current_pos = NavSatFix()
@@ -88,21 +90,16 @@ class RfidReader(Node):
     
     # RFID detection callback 
     def rfid_callback(self, message : RelativeHumidity):
-        # skip message if no gps-data is available yet
-        if self.init:
-            return
         # check if the humidity we read out is below threshold
-        if message.relative_humidity < 0.5:
-            self.get_logger().info("Humidity too low - Sending goal to UGV")
+        if message.relative_humidity < self.humidity_threshold:
+            self.get_logger().info("Humidity too low: %.2f - Sending goal to UGV" % message.relative_humidity)
             # if it is below a certain threshold send the current UAV position as goal-point to the UGV
             self.send_sensor_position_as_goal(message.header.stamp)
+        else:
+            self.get_logger().info("Humidity acceptable: %.2f   - No action taken" % message.relative_humidity)  
     
     # GPS-position (fix) message callback 
     def gps_callback(self, message : NavSatFix):
-        
-        # let other callbacks know that gps is available
-        if self.init:
-            self.init = False
         
         # print the current position every two seconds (not for every message)
         now = self.get_clock().now()
