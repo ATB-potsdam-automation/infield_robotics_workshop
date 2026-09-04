@@ -14,6 +14,7 @@ RUN apt-get update \
     && apt-get install -y \
         python3-colcon-common-extensions \
         ros-${ROS_DISTRO}-tf-transformations \
+        ros-${ROS_DISTRO}-foxglove-bridge \
     && rm -rf /var/lib/apt/lists/*
 
 # ********************************************************
