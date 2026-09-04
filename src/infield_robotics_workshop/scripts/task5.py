@@ -13,10 +13,14 @@
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import rclpy
+from geometry_msgs.msg import PoseStamped
+from rclpy.duration import Duration
 from rclpy.node import Node
 from rclpy.parameter import Parameter
 from sensor_msgs.msg import RelativeHumidity, NavSatFix
 import tf2_ros
+import tf_transformations
+import tf2_geometry_msgs
 
 
 class RfidReader(Node):
@@ -39,39 +43,53 @@ class RfidReader(Node):
         # set up our TransformListener, this gives us access to transformations (even past ones through the buffer)
         self.listener = tf2_ros.TransformListener(self.tfBuffer, self)
 
-        # bool to avoid old latched message
-        self.init = True
+        
         self.last_gps_log_time = None
     
     def send_sensor_position_as_goal(self, timestamp):
+        # get the transform
+        try:
+            transform = self.tfBuffer.lookup_transform(
+                "map", "uav/base_link",
+                timestamp,
+                timeout=Duration(seconds=0.1)
+            )
+        except tf2_ros.TransformException as error:
+            self.get_logger().warning(f"Could not transform map to uav/base_link: {error}")
+            return
+        # print out the rotation
+        self.get_logger().info(
+            "received Rotation: (%f, %f, %f, %f)" % (
+                transform.transform.rotation.x,
+                transform.transform.rotation.y,
+                transform.transform.rotation.z,
+                transform.transform.rotation.w,
+            )
+        )
+        # print out the translation
+        self.get_logger().info(
+            "received Translation: (%f, %f, %f)" % (
+                transform.transform.translation.x,
+                transform.transform.translation.y,
+                transform.transform.translation.z,
+            )
+        )
         """
         YOUR CODE GOES HERE:
         
-        Get the transform from the frame "map" to the frame "uav/base_link" (position of the uav) at the time of the measurement
-        using the tfBuffer: self.tfBuffer.lookup_transform(target_frame, source_frame, time, timeout)
+        apply the transform to the current position of the UAV on the ground.
         
-        Use the `timestamp` argument (the time the RFID message was recorded) as the lookup time,
-        so the transform reflects the UAV position at the moment of detection instead of now.
+        Reminder: p' = q * p * conj(q) 
         
-        lookup_transform() will block until the transform between the two frames becomes available.
-        Therefore, you can set a timeout with the 4. (optional) argument.
+        Or use the utility function for transformation provided by the tfBUffer class
+         - best: do both and compare the results
         
-        (If you need more information regarding the time arguments look up the ROS function lookup_transform online)
-        
-        Translation [x y z] kann be accessed as e.g. transform_object.transform.translation.x ,
-        equivalent rotation [x y z w] as e.g. transform_object.transform.rotation.x 
-        
-        Print out the resulting transformation as loginfo.
-
-        Why don't we need to synchronize the GPS and RFID messages, here?
         """
-        pass # do nothing
-   
+    
     # RFID detection callback 
     def rfid_callback(self, message : RelativeHumidity):
-        # skip first message (old latched)
+        # skip message if no gps-data is available yet
         if self.init:
-
             return
         # check if the humidity we read out is below threshold
         if message.relative_humidity < 0.5:
@@ -95,13 +113,13 @@ class RfidReader(Node):
             self.last_gps_log_time = now
         
         # store the position in a object attribute
-        self.current_pos = message     
-
+        self.current_pos = message
+        
     def run(self):
 
         # spin() simply keeps python from exiting until this node is stopped
         rclpy.spin(self)
-
+        
 
 def main(args=None):
     rclpy.init(args=args)
@@ -113,8 +131,8 @@ def main(args=None):
         pass
     finally:
         rfid_reader.destroy_node()
-    if rclpy.ok():
-        rclpy.shutdown()
+        if rclpy.ok():
+            rclpy.shutdown()
 
 
 if __name__ == '__main__':

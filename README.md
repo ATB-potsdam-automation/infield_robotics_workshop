@@ -65,4 +65,12 @@ source ~/infield_robotics_ws/install/setup.bash
 ros2 run infield_robotics_workshop task1.py
 ```
 
-Replace `task1.py` with `task2.py`, `task3.py`, or `task4.py` for the other exercises. The task nodes enable simulated time automatically so they follow the playback clock.
+Replace `task1.py` with `task2.py`, `task3.py`, `task4.py`, or `task5.py` for the other exercises. The task nodes enable simulated time automatically so they follow the playback clock.
+
+The exercises build up the workflow in this order:
+
+1. `task1.py`: subscribe to RFID and GPS topics and combine RFID detections with the latest GPS position.
+2. `task2.py`: compare latest-GPS pairing with timestamp-based approximate synchronization.
+3. `task3.py`: write RFID, GPS, and humidity data to a CSV file.
+4. `task4.py`: look up the UAV pose using TF.
+5. `task5.py`: apply transforms to position data.

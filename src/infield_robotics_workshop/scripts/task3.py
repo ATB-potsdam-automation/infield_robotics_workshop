@@ -13,10 +13,13 @@
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import rclpy
+from ament_index_python.packages import get_package_share_directory
+from message_filters import ApproximateTimeSynchronizer, Subscriber
+from pathlib import Path
 from rclpy.node import Node
 from rclpy.parameter import Parameter
 from sensor_msgs.msg import RelativeHumidity, NavSatFix
-import tf2_ros
+import csv
 
 
 class RfidReader(Node):
@@ -25,61 +28,66 @@ class RfidReader(Node):
         super().__init__('listener')
         self.set_parameters([Parameter('use_sim_time', value=True)])
 
-        # initialise storage space for 
-        self.current_pos = NavSatFix()
+        # open a csv file in the results folder
+        self.fh = open(Path.home() / "infield_robotics_ws" / "results" / "humidity_sensors.csv", "w")
 
-        # hook the first subscriber to our rfid-callback
-        self.create_subscription(RelativeHumidity, "/rfid_detections", self.rfid_callback, 1)
+        # create a csv_writer object to write data the Dict-Writer uses a Dictionary Structure
+        self.csv_writer = csv.DictWriter(self.fh, fieldnames=['Sensor_ID', 'Latitude', 'Longitude', 'Humidity'])
 
-        # hook the first subscriber to the fix-callback
+        self.csv_writer.writeheader()
+
+        self.declare_parameter('sync_queue_size', 10)
+        self.declare_parameter('sync_slop_seconds', 0.3)
+
+        sync_queue_size = self.get_parameter('sync_queue_size').value
+        sync_slop_seconds = self.get_parameter('sync_slop_seconds').value
+
+        # plain GPS subscription only feeds the periodic position log
         self.create_subscription(NavSatFix, "/uav1/fix", self.gps_callback, 1)
 
-        # set up a tf2 Buffer this stores the incoming tf-messages       
-        self.tfBuffer = tf2_ros.Buffer()
-        # set up our TransformListener, this gives us access to transformations (even past ones through the buffer)
-        self.listener = tf2_ros.TransformListener(self.tfBuffer, self)
+        # RFID detections are paired with a GPS fix by timestamp instead of by callback order
+        self.synced_rfid_subscription = Subscriber(self, RelativeHumidity, "/rfid_detections")
+        self.synced_gps_subscription = Subscriber(self, NavSatFix, "/uav1/fix")
+        self.synchronizer = ApproximateTimeSynchronizer(
+            [self.synced_rfid_subscription, self.synced_gps_subscription],
+            sync_queue_size,
+            sync_slop_seconds,
+        )
+        self.synchronizer.registerCallback(self.synced_callback)
 
-        # bool to avoid old latched message
-        self.init = True
         self.last_gps_log_time = None
-    
-    def send_current_position_as_goal(self):
-        """
-        YOUR CODE GOES HERE:
         
-        Get the transform from the frame "map" to the frame "uav/base_link" (position of the uav) 
-        using the tfBuffer: self.tfBuffer.lookup_transform(target_frame, source_frame, time, timeout)
-        
-        Time is the time at which we want to transform. Also, lookup_transform() will block until the transform between the two frames becomes available.
-        Therefore, you can set a timeout with the 4. (optional) argument.
-        
-        (If you need more information regarding the time arguments look up the ROS function lookup_transform online)
-        
-        Translation [x y z] kann be accessed as e.g. transform_object.transform.translation.x ,
-        equivalent rotation [x y z w] as e.g. transform_object.transform.rotation.x 
-        
-        Print out the resulting transformation as loginfo.
-        """
-        pass # do nothing
-   
-    # RFID detection callback 
-    def rfid_callback(self, message : RelativeHumidity):
-        # skip first message (old latched)
-        if self.init:
 
-            return
-        # check if the humidity we read out is below threshold
-        if message.relative_humidity < 0.5:
-            self.get_logger().info("Humidity too low - Sending goal to UGV")
-            # if it is below a certain threshold send the current UAV position as goal-point to the UGV
-            self.send_current_position_as_goal()      
-    
+    # synchronized RFID + GPS callback
+    def synced_callback(self, rfid_message : RelativeHumidity, gps_message : NavSatFix):
+        # print RFID-sensor info to the screen
+        self.get_logger().info(
+            f"Read RFID-Sensor! Sensor: {rfid_message.header.frame_id} "
+            f"Humidity: {rfid_message.relative_humidity:f}"
+        )
+                
+        # we need to make sure the writer has been initialised and the file has not been closed:
+        if self.csv_writer is not None:
+                        
+            """
+            YOUR CODE GOES Below this part:
+            
+            write the data to the csv file using the csv-writer: self.csv_writer.writerow( Dict )
+            
+            the writer expects an argument of dictionary type: {"field1" : value1, "field2" : value2}
+            
+            the field names are: "Sensor_ID", "Latitude", "Longitude", "Humidity"
+
+            take the sensor id and humidity from `rfid_message` and the position from `gps_message`
+                    
+            documentation of the csv-DictWriter can be found here: https://docs.python.org/3/library/csv.html#csv.DictWriter 
+                
+            """
+            pass
+            
+
     # GPS-position (fix) message callback 
     def gps_callback(self, message : NavSatFix):
-        
-        # let other callbacks know that gps is available
-        if self.init:
-            self.init = False
         
         # print the current position every two seconds (not for every message)
         now = self.get_clock().now()
@@ -88,15 +96,17 @@ class RfidReader(Node):
                 f"Read GPS Position. Lat: {message.latitude:f} Long: {message.longitude:f}"
             )
             self.last_gps_log_time = now
-        
-        # store the position in a object attribute
-        self.current_pos = message     
 
     def run(self):
 
         # spin() simply keeps python from exiting until this node is stopped
-        rclpy.spin(self)
-
+        try:
+            rclpy.spin(self)
+        finally:
+            # close the file when the node is stopped
+            self.csv_writer = None
+            self.fh.close()
+        
 
 def main(args=None):
     rclpy.init(args=args)
@@ -108,8 +118,8 @@ def main(args=None):
         pass
     finally:
         rfid_reader.destroy_node()
-    if rclpy.ok():
-        rclpy.shutdown()
+        if rclpy.ok():
+            rclpy.shutdown()
 
 
 if __name__ == '__main__':

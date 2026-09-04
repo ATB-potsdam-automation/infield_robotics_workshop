@@ -8,6 +8,7 @@ install(PROGRAMS
   scripts/task2.py
   scripts/task3.py
   scripts/task4.py
+  scripts/task5.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
