@@ -52,7 +52,7 @@ class RfidReader(Node):
         # get the transform
         try:
             transform = self.tfBuffer.lookup_transform(
-                "uav/base_link", "map", self.get_clock().now(), timeout=Duration(seconds=0.1)
+                "map", "uav/base_link", self.get_clock().now(), timeout=Duration(seconds=0.1)
             )
         except tf2_ros.TransformException as error:
             self.get_logger().warning(f"Could not transform map to uav/base_link: {error}")
