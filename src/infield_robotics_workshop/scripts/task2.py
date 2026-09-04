@@ -75,13 +75,7 @@ class RfidReader(Node):
             documentation of the csv-DictWriter can be found here: https://docs.python.org/3/library/csv.html#csv.DictWriter 
                 
             """
-            self.csv_writer.writerow({
-                "Sensor_ID": message.header.frame_id,
-                "Latitude": self.current_pos.latitude,
-                "Longitude": self.current_pos.longitude,
-                "Humidity": message.relative_humidity,
-            })
-            self.fh.flush()
+            pass 
             
 
     # GPS-position (fix) message callback 
