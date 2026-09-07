@@ -55,9 +55,6 @@ class RfidReader(Node):
         )
         self.synchronizer.registerCallback(self.synced_callback)
 
-        self.last_gps_log_time = None
-        
-
     # synchronized RFID + GPS callback
     def synced_callback(self, rfid_message : RelativeHumidity, gps_message : NavSatFix):
         # print RFID-sensor info to the screen
@@ -90,12 +87,10 @@ class RfidReader(Node):
     def gps_callback(self, message : NavSatFix):
         
         # print the current position every two seconds (not for every message)
-        now = self.get_clock().now()
-        if self.last_gps_log_time is None or (now - self.last_gps_log_time).nanoseconds >= 2_000_000_000:
-            self.get_logger().info(
-                f"Read GPS Position. Lat: {message.latitude:f} Long: {message.longitude:f}"
-            )
-            self.last_gps_log_time = now
+        self.get_logger().info(
+            f"Read GPS Position. Lat: {message.latitude:f} Long: {message.longitude:f}",
+            throttle_duration_sec=2.0,
+        )
 
     def run(self):
 

@@ -65,7 +65,6 @@ class RfidReader(Node):
         
         # bool to avoid old latched message
         self.init = True
-        self.last_gps_log_time = None
 
     def stamp_to_seconds(self, stamp):
         return stamp.sec + stamp.nanosec * 1e-9
@@ -105,12 +104,10 @@ class RfidReader(Node):
             self.init = False
 
         # print the current position every two seconds (not for every message)
-        now = self.get_clock().now()
-        if self.last_gps_log_time is None or (now - self.last_gps_log_time).nanoseconds >= 2_000_000_000:
-            self.get_logger().info(
-                f"Read GPS Position. Lat: {message.latitude:f} Long: {message.longitude:f}"
-            )
-            self.last_gps_log_time = now
+        self.get_logger().info(
+            f"Read GPS Position. Lat: {message.latitude:f} Long: {message.longitude:f}",
+            throttle_duration_sec=2.0,
+        )
 
         # store the position in a object attribute
         self.current_pos = message
