@@ -12,7 +12,13 @@ This repository contains material for the Infield Robotics Workshop of the VDI-L
 
 ## Installation
 
+### Devcontainer
+
+The `.devcontainer` configuration uses the `ros:jazzy` image. Reopen this repository in the container from VS Code; its post-create step builds the workspace with `colcon` and adds both ROS and the workspace setup files to `.bashrc`. The python scripts will be installed with --symlink-install meaning that you only have to change the orginal scripts and not rebuild after every change to python code.
+
 ### New colcon workspace
+
+If you have an existing ROS 2 Jazzy environment you can also run the courses locally inside it.
 
 Source ROS 2 Jazzy:
 
@@ -20,13 +26,11 @@ Source ROS 2 Jazzy:
 source /opt/ros/jazzy/setup.bash
 ```
 
-Create a workspace and clone the workshop into its `src` directory:
+Clone the workshop:
 
 ```sh
-mkdir -p ~/infield_robotics_ws/src
-cd ~/infield_robotics_ws/src
 git clone https://github.com/ATB-potsdam-automation/infield_robotics_workshop.git
-cd ~/infield_robotics_ws
+cd ~/infield_robotics_workshop
 ```
 
 Build and source the workspace:
@@ -36,32 +40,31 @@ colcon build --symlink-install
 source install/setup.bash
 ```
 
-### Existing colcon workspace
-
-1. Source `/opt/ros/jazzy/setup.bash`.
-2. Clone this repository into the workspace `src` directory.
-3. From the workspace root, run `colcon build --symlink-install`.
-4. Source `install/setup.bash` in every terminal that uses the package.
-
-### Devcontainer
-
-The `.devcontainer` configuration uses the `ros:jazzy` image. Reopen this repository in the container from VS Code; its post-create step builds the workspace with `colcon` and adds both ROS and the workspace setup files to `.bashrc`.
-
 ## Running the exercises
 
-In one terminal, source the workspace and start the looping playback:
+In one terminal:
+Source the workspace (you can skip this inside the devcontainer as it is done automatically):
 
 ```sh
 source /opt/ros/jazzy/setup.bash
 source ~/infield_robotics_ws/install/setup.bash
+```
+
+and start the looping playback and foxglove bridge:
+
+```sh
 ros2 launch infield_robotics_workshop workshop.launch.py
 ```
 
-In a second terminal, source the same setup and run one exercise:
+In a second terminal, source the same setup (local env only) and run one exercise:
 
 ```sh
 source /opt/ros/jazzy/setup.bash
 source ~/infield_robotics_ws/install/setup.bash
+```
+
+
+```sh
 ros2 run infield_robotics_workshop task1.py
 ```
 
