@@ -25,7 +25,7 @@ import csv
 class RfidReader(Node):
 
     def __init__(self):
-        super().__init__('listener')
+        super().__init__('rfid_reader')
         self.set_parameters([Parameter('use_sim_time', value=True)])
 
         # open a csv file in the results folder

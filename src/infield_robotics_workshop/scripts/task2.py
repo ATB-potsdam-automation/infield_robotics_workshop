@@ -22,7 +22,7 @@ from sensor_msgs.msg import NavSatFix, RelativeHumidity
 class RfidReader(Node):
 
     def __init__(self):
-        super().__init__('listener')
+        super().__init__('rfid_reader')
         self.set_parameters([Parameter('use_sim_time', value=True)])
 
         self.declare_parameter('assumed_speed_mps', 2.0)

@@ -22,7 +22,7 @@ import tf2_ros
 class RfidReader(Node):
 
     def __init__(self):
-        super().__init__('listener')
+        super().__init__('rfid_reader')
         self.set_parameters([Parameter('use_sim_time', value=True)])
         self.declare_parameter('humidity_threshold', 0.5)
         self.humidity_threshold = self.get_parameter('humidity_threshold').value
