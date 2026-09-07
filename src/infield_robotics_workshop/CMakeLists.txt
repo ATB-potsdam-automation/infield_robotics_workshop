@@ -15,7 +15,6 @@ install(PROGRAMS
 install(DIRECTORY
   data
   launch
-  results
   DESTINATION share/${PROJECT_NAME}
 )
 
