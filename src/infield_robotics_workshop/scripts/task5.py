@@ -77,11 +77,11 @@ class RfidReader(Node):
         """
         YOUR CODE GOES HERE:
         
-        apply the transform to the current position of the UAV on the ground.
+        apply the transform at the time of detection to the position of the UAV.
         
         Reminder: p' = q * p * conj(q) 
         
-        Or use the utility function for transformation provided by the tfBUffer class
+        Or use the utility function for transformation (do_transform_pose_stamped) provided by tf2_geometry_msgs
          - best: do both and compare the results
         
         """
